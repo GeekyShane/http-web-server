@@ -174,7 +174,7 @@ void WebServer::timer(int connfd, struct sockaddr_in client_address)
     utils.m_time_heap->add_timer(timer);
 }
 
-//若有数据传输，则将定时器往后延迟3个单位
+//若有数据传输，则将定时器往后延迟2个单位
 //并对新的定时器在链表上的位置进行调整
 void WebServer::adjust_timer(heap_timer *timer)
 {

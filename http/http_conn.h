@@ -32,6 +32,7 @@ public:
     static const int FILENAME_LEN = 200;
     static const int READ_BUFFER_SIZE = 2048;
     static const int WRITE_BUFFER_SIZE = 1024;
+    //HTTP请求方法
     enum METHOD
     {
         GET = 0,
@@ -44,12 +45,14 @@ public:
         CONNECT,
         PATH
     };
+    //主状态机的状态
     enum CHECK_STATE
     {
         CHECK_STATE_REQUESTLINE = 0,
         CHECK_STATE_HEADER,
         CHECK_STATE_CONTENT
     };
+    //服务器处理HTTP请求的结果
     enum HTTP_CODE
     {
         NO_REQUEST,
@@ -61,6 +64,7 @@ public:
         INTERNAL_ERROR,
         CLOSED_CONNECTION
     };
+    //从状态机的3种状态
     enum LINE_STATUS
     {
         LINE_OK = 0,
@@ -72,16 +76,19 @@ public:
     http_conn() {}
     ~http_conn() {}
 
-public:
+    //初始化套接字地址，函数内部会调用私有方法init
     void init(int sockfd, const sockaddr_in &addr, char *, int, int, string user, string passwd, string sqlname);
     void close_conn(bool real_close = true);
     void process();
+    //读取浏览器发来的全部数据
     bool read_once();
+    //响应报文写入函数
     bool write();
     sockaddr_in *get_address()
     {
         return &m_address;
     }
+    //初始化数据库读取表
     void initmysql_result(connection_pool *connPool);
     int timer_flag;
     int improv;
@@ -89,15 +96,22 @@ public:
 
 private:
     void init();
+    //从读缓冲区读取，并处理请求报文
     HTTP_CODE process_read();
+    //向写缓冲区写入响应报文数据
     bool process_write(HTTP_CODE ret);
+    //以下三步请求报文中的数据解析均由主状态机完成
     HTTP_CODE parse_request_line(char *text);
     HTTP_CODE parse_headers(char *text);
     HTTP_CODE parse_content(char *text);
+    //生成响应报文
     HTTP_CODE do_request();
+    //m_start是已经解析的字符， get_line用于将指针向后偏移，指向未处理的字符
     char *get_line() { return m_read_buf + m_start_line; };
+    //从状态机读取一行，分析是请求报文的哪一部分
     LINE_STATUS parse_line();
     void unmap();
+    //根据响应报文的格式，生成对应的8个部分，以下函数均由do_request调用
     bool add_response(const char *format, ...);
     bool add_content(const char *content);
     bool add_status_line(int status, const char *title);
@@ -116,14 +130,22 @@ public:
 private:
     int m_sockfd;
     sockaddr_in m_address;
+    //存储读取的请求报文数据
     char m_read_buf[READ_BUFFER_SIZE];
     int m_read_idx;
     int m_checked_idx;
     int m_start_line;
+    //存储发出的响应报文数据
     char m_write_buf[WRITE_BUFFER_SIZE];
+    //指示buffer中的长度
     int m_write_idx;
+
+    //主状态机的状态
     CHECK_STATE m_check_state;
+    //请求方法
     METHOD m_method;
+
+    //以下为解析请求报文中对应的6个变量
     char m_real_file[FILENAME_LEN];
     char *m_url;
     char *m_version;

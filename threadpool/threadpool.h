@@ -33,6 +33,8 @@ private:
     connection_pool *m_connPool;  //数据库
     int m_actor_model;          //模型切换
 };
+
+
 template <typename T>
 threadpool<T>::threadpool( int actor_model, connection_pool *connPool, int thread_number, int max_requests) : m_actor_model(actor_model),m_thread_number(thread_number), m_max_requests(max_requests), m_threads(NULL),m_connPool(connPool)
 {
@@ -48,6 +50,7 @@ threadpool<T>::threadpool( int actor_model, connection_pool *connPool, int threa
             delete[] m_threads;
             throw std::exception();
         }
+        //线程进行分离后，不需要单独对工作线程进行回收
         if (pthread_detach(m_threads[i]))
         {
             delete[] m_threads;
@@ -101,13 +104,16 @@ void threadpool<T>::run()
 {
     while (true)
     {
+        //信号量等待
         m_queuestat.wait();
+        //被唤醒后先加互斥锁
         m_queuelocker.lock();
         if (m_workqueue.empty())
         {
             m_queuelocker.unlock();
             continue;
         }
+        //从请求队列取出第一个任务，并将任务从请求队列删除
         T *request = m_workqueue.front();
         m_workqueue.pop_front();
         m_queuelocker.unlock();

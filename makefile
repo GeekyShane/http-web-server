@@ -13,3 +13,4 @@ server: main.cpp  ./timer/min_heap_timer.cpp ./http/http_conn.cpp ./log/log.cpp 
 
 clean:
 	rm  -r server
+	rm  -rf *ServerLog*

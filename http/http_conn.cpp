@@ -1,5 +1,4 @@
 #include "http_conn.h"
-
 #include <mysql/mysql.h>
 #include <fstream>
 
@@ -62,18 +61,21 @@ void addfd(int epollfd, int fd, bool one_shot, int TRIGMode)
     epoll_event event;
     event.data.fd = fd;
 
+    //边沿触发
     if (1 == TRIGMode)
         event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
+    //电平出发
     else
         event.events = EPOLLIN | EPOLLRDHUP;
 
     if (one_shot)
         event.events |= EPOLLONESHOT;
+    //注册fd上的事件
     epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &event);
     setnonblocking(fd);
 }
 
-//从内核时间表删除描述符
+//从内核事件表删除描述符
 void removefd(int epollfd, int fd)
 {
     epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, 0);
@@ -167,6 +169,7 @@ http_conn::LINE_STATUS http_conn::parse_line()
     for (; m_checked_idx < m_read_idx; ++m_checked_idx)
     {
         temp = m_read_buf[m_checked_idx];
+        //当前读取到的字符
         if (temp == '\r')
         {
             if ((m_checked_idx + 1) == m_read_idx)
@@ -219,11 +222,13 @@ bool http_conn::read_once()
     //ET读数据
     else
     {
+        //从套接字接受数据，存储在读缓冲区
         while (true)
         {
             bytes_read = recv(m_sockfd, m_read_buf + m_read_idx, READ_BUFFER_SIZE - m_read_idx, 0);
             if (bytes_read == -1)
             {
+                //非阻塞ET模式下需要一次性将数据读完
                 if (errno == EAGAIN || errno == EWOULDBLOCK)
                     break;
                 return false;
@@ -232,6 +237,7 @@ bool http_conn::read_once()
             {
                 return false;
             }
+            //修改m_read_idx的读取字节数
             m_read_idx += bytes_read;
         }
         return true;
@@ -241,23 +247,24 @@ bool http_conn::read_once()
 //解析http请求行，获得请求方法，目标url及http版本号
 http_conn::HTTP_CODE http_conn::parse_request_line(char *text)
 {
+    //检索字符串 text 中第一个匹配字符串 str2 中字符的字符，不包含空结束字符,返回该字符的位置
     m_url = strpbrk(text, " \t");
     if (!m_url)
     {
         return BAD_REQUEST;
     }
-    *m_url++ = '\0';
+    *m_url++ = '\0';      //'\0'为字符串的结束字符
     char *method = text;
-    if (strcasecmp(method, "GET") == 0)
+    if (strcasecmp(method, "GET") == 0)        //比较参数s1 和s2 字符串，比较时会自动忽略大小写的差异
         m_method = GET;
-    else if (strcasecmp(method, "POST") == 0)
+    else if (strcasecmp(method, "POST") == 0)  
     {
         m_method = POST;
         cgi = 1;
     }
     else
         return BAD_REQUEST;
-    m_url += strspn(m_url, " \t");
+    m_url += strspn(m_url, " \t");           //检索字符串 str1 中第一个不在字符串 str2 中出现的字符下标
     m_version = strpbrk(m_url, " \t");
     if (!m_version)
         return BAD_REQUEST;
@@ -268,7 +275,7 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char *text)
     if (strncasecmp(m_url, "http://", 7) == 0)
     {
         m_url += 7;
-        m_url = strchr(m_url, '/');
+        m_url = strchr(m_url, '/');           //在参数 str 所指向的字符串中搜索第一次出现字符 c（一个无符号字符）的位置
     }
 
     if (strncasecmp(m_url, "https://", 8) == 0)

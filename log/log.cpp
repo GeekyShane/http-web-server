@@ -8,13 +8,13 @@ using namespace std;
 
 Log::Log()
 {
-    m_count = 0;
-    m_is_async = false;
+    m_count = 0;  //日志行数记录
+    m_is_async = false;   //是否同步标志位
 }
 
 Log::~Log()
 {
-    if (m_fp != NULL)
+    if (m_fp != NULL)  //打开log的文件指针
     {
         fclose(m_fp);
     }
@@ -59,6 +59,7 @@ bool Log::init(const char *file_name, int close_log, int log_buf_size, int split
 
     m_today = my_tm.tm_mday;
     
+    //打开log的文件指针
     m_fp = fopen(log_full_name, "a");
     if (m_fp == NULL)
     {
@@ -96,7 +97,7 @@ void Log::write_log(int level, const char *format, ...)
     }
     //写入一个log，对m_count++, m_split_lines最大行数
     m_mutex.lock();
-    m_count++;
+    m_count++; //日志行数加1
 
     if (m_today != my_tm.tm_mday || m_count % m_split_lines == 0) //everyday log
     {
@@ -123,8 +124,8 @@ void Log::write_log(int level, const char *format, ...)
  
     m_mutex.unlock();
 
-    va_list valst;
-    va_start(valst, format);
+    va_list valst; //获取函数的变长参数，定义一个va_list类型的变量，变量是指向参数的指针
+    va_start(valst, format);  //va_start初始化刚定义的变量，第二个参数是最后一个显式声明的参数
 
     string log_str;
     m_mutex.lock();
@@ -141,18 +142,18 @@ void Log::write_log(int level, const char *format, ...)
 
     m_mutex.unlock();
 
-    if (m_is_async && !m_log_queue->full())
+    if (m_is_async && !m_log_queue->full()) //异步日志写入方式
     {
         m_log_queue->push(log_str);
     }
-    else
+    else  //同步日志写入方式
     {
         m_mutex.lock();
-        fputs(log_str.c_str(), m_fp);
+        fputs(log_str.c_str(), m_fp);  //c_str函数：将string对象转换成C中的字符串样式，生成一个const char*类型的指针，指向以空字符终止的数组
         m_mutex.unlock();
     }
 
-    va_end(valst);
+    va_end(valst);  //va_end将va_list定义的变量重置为NULL
 }
 
 void Log::flush(void)

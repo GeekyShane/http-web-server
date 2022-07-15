@@ -13,7 +13,7 @@ using namespace std;
 class Log
 {
 public:
-    //C++11以后,使用局部变量懒汉不用加锁
+    //C++11以后,使用局部变量懒汉模式不用加锁
     static Log *get_instance()
     {
         static Log instance;
@@ -32,6 +32,7 @@ public:
     void flush(void);
 
 private:
+    //私有化单例类的构造函数，防止外界创建单例类的对象
     Log();
     virtual ~Log();
     void *async_write_log()
@@ -56,7 +57,7 @@ private:
     FILE *m_fp;         //打开log的文件指针
     char *m_buf;
     block_queue<string> *m_log_queue; //阻塞队列
-    bool m_is_async;                  //是否同步标志位
+    bool m_is_async;                   
     locker m_mutex;
     int m_close_log; //关闭日志
 };
