@@ -132,8 +132,11 @@ private:
     sockaddr_in m_address;
     //存储读取的请求报文数据
     char m_read_buf[READ_BUFFER_SIZE];
+    //读缓冲区中数据的最后一个字节的下一个位置
     int m_read_idx;
+    //读缓冲区读取的位置
     int m_checked_idx;
+    //读缓冲区中已经解析的字符个数
     int m_start_line;
     //存储发出的响应报文数据
     char m_write_buf[WRITE_BUFFER_SIZE];
@@ -146,14 +149,18 @@ private:
     METHOD m_method;
 
     //以下为解析请求报文中对应的6个变量
+    //存储读取文件的名称
     char m_real_file[FILENAME_LEN];
     char *m_url;
     char *m_version;
     char *m_host;
     int m_content_length;
     bool m_linger;
+
+    //读取服务器上的文件地址
     char *m_file_address;
     struct stat m_file_stat;
+    //io向量机制iovec
     struct iovec m_iv[2];
     int m_iv_count;
     int cgi;        //是否启用的POST

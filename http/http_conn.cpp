@@ -318,7 +318,7 @@ http_conn::HTTP_CODE http_conn::parse_headers(char *text)
     {
         text += 15;
         text += strspn(text, " \t");
-        m_content_length = atol(text);
+        m_content_length = atol(text);  //把参数 str 所指向的字符串转换为一个长整数
     }
     else if (strncasecmp(text, "Host:", 5) == 0)
     {
@@ -397,7 +397,7 @@ http_conn::HTTP_CODE http_conn::do_request()
     strcpy(m_real_file, doc_root);
     int len = strlen(doc_root);
     //printf("m_url:%s\n", m_url);
-    const char *p = strrchr(m_url, '/');
+    const char *p = strrchr(m_url, '/');  //在参数 str 所指向的字符串中搜索最后一次出现字符 c（一个无符号字符）的位置
 
     //处理cgi
     if (cgi == 1 && (*(p + 1) == '2' || *(p + 1) == '3'))
@@ -408,8 +408,8 @@ http_conn::HTTP_CODE http_conn::do_request()
 
         char *m_url_real = (char *)malloc(sizeof(char) * 200);
         strcpy(m_url_real, "/");
-        strcat(m_url_real, m_url + 2);
-        strncpy(m_real_file + len, m_url_real, FILENAME_LEN - len - 1);
+        strcat(m_url_real, m_url + 2);  //把 src 所指向的字符串追加到 dest 所指向的字符串的结尾
+        strncpy(m_real_file + len, m_url_real, FILENAME_LEN - len - 1);  //把 src 所指向的字符串复制到 dest，最多复制 n 个字符。当 src 的长度小于 n 时，dest 的剩余部分将用空字节填充
         free(m_url_real);
 
         //将用户名和密码提取出来
@@ -437,6 +437,7 @@ http_conn::HTTP_CODE http_conn::do_request()
             strcat(sql_insert, password);
             strcat(sql_insert, "')");
 
+            //未找到，即在数据库中不存在
             if (users.find(name) == users.end())
             {
                 m_lock.lock();
